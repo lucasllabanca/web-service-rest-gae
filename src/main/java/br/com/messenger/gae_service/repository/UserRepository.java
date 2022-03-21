@@ -119,6 +119,18 @@ public class UserRepository {
         }
     }
 
+    public Optional<User> getByCpf (String cpf) {
+        log.info("Get user by CPF: " + cpf);
+
+        Entity userEntity = getUserEntityByCpf(cpf);
+
+        if (userEntity != null) {
+            return Optional.of(entityToUser(userEntity));
+        } else {
+            return Optional.empty();
+        }
+    }
+
     public List<User> getUsers() {
         List<User> users = new ArrayList<>();
         Query query = new Query(USER_KIND).addSort(PROPERTY_EMAIL, Query.SortDirection.ASCENDING);
