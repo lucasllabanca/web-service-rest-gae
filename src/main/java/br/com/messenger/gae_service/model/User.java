@@ -5,7 +5,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,6 +19,7 @@ public class User implements Serializable, UserDetails {
     private String fcmRegId;
     private Date lastLogin;
     private Date lastFcmRegister;
+    private Date lastUpdate;
     private String role;
     private String cpf;
     private Long salesProviderUserId;
@@ -106,6 +106,10 @@ public class User implements Serializable, UserDetails {
     public void setLastFcmRegister(Date lastFCMRegister) {
         this.lastFcmRegister = lastFCMRegister;
     }
+
+    public Date getLastUpdate() { return lastUpdate; }
+
+    public void setLastUpdate(Date lastUpdate) { this.lastUpdate = lastUpdate; }
 
     public String getRole() {
         return role;

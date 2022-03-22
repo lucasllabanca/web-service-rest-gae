@@ -50,10 +50,11 @@ public class UserController {
             return new ResponseEntity<>(validateMsg, HttpStatus.BAD_REQUEST);
 
         try {
-            return new ResponseEntity<User>(userRepository.saveUser(user), HttpStatus.CREATED);
+            return new ResponseEntity<User>(userRepository.saveUser(user), HttpStatus.OK);
         } catch (UserAlreadyExistsException e) {
-            log.info(e.getMessage());
-            return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.PRECONDITION_FAILED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -69,14 +70,16 @@ public class UserController {
         if (canRunThisOperation(authentication, email)) {
 
             if (!checkRole.hasRoleAdmin(authentication))
-                user.setRole("USER");
+                user.setRole("ROLE_USER");
 
             try {
-                return new ResponseEntity<User>(userRepository.updateUser(user, email), HttpStatus.OK);
+                return new ResponseEntity<User>(userRepository.updateUser(user, email, true), HttpStatus.OK);
             } catch (UserAlreadyExistsException e) {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.PRECONDITION_FAILED);
             } catch (UserNotFoundException e) {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            } catch (Exception e) {
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
             }
         } else {
             return new ResponseEntity<>("Usuário não autorizado", HttpStatus.FORBIDDEN);
@@ -96,13 +99,12 @@ public class UserController {
             Optional<User> optUser = userRepository.getByEmail(email);
 
             if (optUser.isPresent()){
-                return new ResponseEntity<>(optUser.get(), HttpStatus.OK);
+                return new ResponseEntity<User>(optUser.get(), HttpStatus.OK);
             }else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("Usuário com e-mail: " + email + " não encontrado", HttpStatus.NOT_FOUND);
             }
-
         } else {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>("Usuário não autorizado", HttpStatus.FORBIDDEN);
         }
     }
 
@@ -110,7 +112,7 @@ public class UserController {
     @GetMapping("/bycpf")
     public ResponseEntity<?> getUserByCpf(@RequestParam String cpf, Authentication authentication) {
 
-        String validateMsg = validateModel(Operation.GETBY, null, cpf, "CPF");
+        String validateMsg = validateModel(Operation.GETBY, null, cpf, "cpf");
 
         if (!validateMsg.isEmpty())
             return new ResponseEntity<>(validateMsg, HttpStatus.BAD_REQUEST);
@@ -118,41 +120,51 @@ public class UserController {
         String authenticationEmail = getAuthenticationEmail(authentication);
 
         if (canRunThisOperation(authentication, authenticationEmail)) {
-            Optional<User> optUser = userRepository.getByEmail(cpf);
+            Optional<User> optUser = userRepository.getByCpf(cpf);
 
             if (optUser.isPresent()){
                 User user = optUser.get();
 
                 if (user.getEmail().equals(authenticationEmail))
-                    return new ResponseEntity<User>(optUser.get(), HttpStatus.OK);
+                    return new ResponseEntity<User>(user, HttpStatus.OK);
                 else
-                    return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                    return new ResponseEntity<>("Usuário não autorizado", HttpStatus.FORBIDDEN);
             }else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("Usuário com CPF: " + cpf + " não encontrado", HttpStatus.NOT_FOUND);
             }
 
         } else {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>("Usuário não autorizado", HttpStatus.FORBIDDEN);
         }
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    @DeleteMapping(path = "/byemail")
-    public ResponseEntity<?> deleteUser(@RequestParam("email") String email, Authentication authentication) {
+    @DeleteMapping(path = "/bycpf")
+    public ResponseEntity<?> deleteUser(@RequestParam String cpf, Authentication authentication) {
 
-        String validateMsg = validateModel(Operation.DELETE, null, email, "email");
+        String validateMsg = validateModel(Operation.DELETE, null, cpf, "cpf");
 
         if (!validateMsg.isEmpty())
             return new ResponseEntity<>(validateMsg, HttpStatus.BAD_REQUEST);
 
-        if (canRunThisOperation(authentication, email)) {
-            try {
-                return new ResponseEntity<>(userRepository.deleteUser(email), HttpStatus.OK);
-            } catch (UserNotFoundException e) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        Optional<User> optUser = userRepository.getByCpf(cpf);
+
+        if (optUser.isPresent()){
+
+            User user = optUser.get();
+
+            if (canRunThisOperation(authentication, user.getEmail())) {
+                try {
+                    return new ResponseEntity<User>(userRepository.deleteUser(cpf), HttpStatus.OK);
+                } catch (UserNotFoundException e) {
+                    return new ResponseEntity<>("Usuário com CPF: " + cpf + " não encontrado", HttpStatus.NOT_FOUND);
+                }
+            } else {
+                return new ResponseEntity<>("Usuário não autorizado", HttpStatus.FORBIDDEN);
             }
+
         } else {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>("Usuário com CPF: " + cpf + " não encontrado", HttpStatus.NOT_FOUND);
         }
     }
 
@@ -200,7 +212,7 @@ public class UserController {
         if (user.getRole() == null || user.getRole().trim().isEmpty())
             return "Está faltando a propriedade 'role' no modelo.";
 
-        if (!user.getRole().equals("ADMIN") || !user.getRole().equals("USER"))
+        if (!user.getRole().equals("ROLE_ADMIN") || !user.getRole().equals("ROLE_USER"))
         return "Role inválida. A role deve ser 'ADMIN' ou 'USER'.";
 
         if (user.getCpf() == null || user.getCpf().trim().isEmpty())

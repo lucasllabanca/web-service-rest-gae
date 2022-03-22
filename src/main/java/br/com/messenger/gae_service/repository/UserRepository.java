@@ -3,6 +3,7 @@ package br.com.messenger.gae_service.repository;
 import br.com.messenger.gae_service.exception.UserAlreadyExistsException;
 import br.com.messenger.gae_service.exception.UserNotFoundException;
 import br.com.messenger.gae_service.model.User;
+import br.com.messenger.gae_service.util.CheckProperty;
 import com.google.appengine.api.datastore.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,6 +41,7 @@ public class UserRepository {
     private static final String PROPERTY_FCM_REG_ID = "fcmRegId";
     private static final String PROPERTY_LAST_LOGIN = "lastLogin";
     private static final String PROPERTY_LAST_FCM_REGISTER = "lastFcmRegister";
+    private static final String PROPERTY_LAST_UPDATE = "lastUpdate";
     private static final String PROPERTY_ROLE = "role";
     private static final String PROPERTY_CPF = "cpf";
     private static final String PROPERTY_SALES_PROVIDER_USER_ID = "salesProviderUserId";
@@ -57,7 +59,7 @@ public class UserRepository {
                 adminUser = optUser.get();
                 if (!adminUser.getRole().equals("ROLE_ADMIN")){
                     adminUser.setRole("ROLE_ADMIN");
-                    this.updateUser(adminUser, ADMIN_EMAIL);
+                    this.updateUser(adminUser, ADMIN_EMAIL, true);
                 }
             } else {
                 adminUser = new User();
@@ -100,7 +102,7 @@ public class UserRepository {
         if (!canUseCache) {
             user.setLastLogin(Calendar.getInstance().getTime());
             try {
-                this.updateUser(user, user.getEmail());
+                this.updateUser(user, user.getEmail(), false);
             } catch (UserAlreadyExistsException | UserNotFoundException e) {
                 log.severe("Falha ao atualizar último login do usuário");
             }
@@ -145,49 +147,43 @@ public class UserRepository {
         return users;
     }
 
-    public User deleteUser(String email) throws UserNotFoundException {
+    public User deleteUser(String cpf) throws UserNotFoundException {
 
-        Entity userEntity = getUserEntityByEmail(email);
+        Entity userEntity = getUserEntityByCpf(cpf);
 
         if (userEntity != null) {
             datastoreService.delete(userEntity.getKey());
             return entityToUser(userEntity);
         } else {
-            throw new UserNotFoundException("Usuário " + email + " não encontrado");
+            throw new UserNotFoundException("Usuário com CPF: " + cpf + " não encontrado");
         }
     }
 
     public User saveUser(User user) throws UserAlreadyExistsException {
 
-        boolean emailExists = checkIfEmailExists(user);
-        boolean cpfExists = checkIfCpfExists(user);
+        if (checkIfEmailExists(user))
+            throw new UserAlreadyExistsException("Usuário com e-mail: " + user.getEmail() + " já existe");
 
-        if (!emailExists && !cpfExists) {
-            Key userKey = KeyFactory.createKey(USER_KIND, USER_KEY);
-            Entity userEntity = new Entity(USER_KIND, userKey);
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-            userToEntity(user, userEntity, true);
-            datastoreService.put(userEntity);
-            user.setId(userEntity.getKey().getId());
-            return user;
-        } else {
-            if (emailExists && cpfExists)
-                throw new UserAlreadyExistsException("Usuário(s) com e-mail: " + user.getEmail() + " e CPF: " + user.getCpf() + " já existe(m)");
-            else if (emailExists)
-                throw new UserAlreadyExistsException("Usuário com e-mail: " + user.getEmail() + " já existe");
-            else
-                throw new UserAlreadyExistsException("Usuário com CPF: " + user.getEmail() + " já existe");
-        }
+        if (checkIfCpfExists(user))
+            throw new UserAlreadyExistsException("Usuário com CPF: " + user.getCpf() + " já existe");
+
+        Key userKey = KeyFactory.createKey(USER_KIND, USER_KEY);
+        Entity userEntity = new Entity(USER_KIND, userKey);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userToEntity(user, userEntity, true);
+        datastoreService.put(userEntity);
+        user.setId(userEntity.getKey().getId());
+        return user;
     }
 
-    public User updateUser(User user, String email) throws UserAlreadyExistsException, UserNotFoundException {
+    public User updateUser(User user, String email, boolean updateLastUpdate) throws UserAlreadyExistsException, UserNotFoundException {
 
         if (!checkIfEmailExists(user)) {
 
             Entity userEntity = getUserEntityByEmail(email);
 
             if (userEntity != null) {
-                userToEntity(user, userEntity, false);
+                userToEntity(user, userEntity, updateLastUpdate);
                 datastoreService.put(userEntity);
                 user.setId(userEntity.getKey().getId());
                 return user;
@@ -242,9 +238,10 @@ public class UserRepository {
         return datastoreService.prepare(query).asSingleEntity();
     }
 
-    private void userToEntity (User user, Entity userEntity, boolean updatePassword) {
+    private void userToEntity (User user, Entity userEntity, boolean updateLastUpdate) {
         userEntity.setProperty(PROPERTY_ID, user.getId());
         userEntity.setProperty(PROPERTY_EMAIL, user.getEmail());
+        userEntity.setProperty(PROPERTY_PASSWORD, user.getPassword());
         userEntity.setProperty(PROPERTY_FCM_REG_ID, user.getFcmRegId());
         userEntity.setProperty(PROPERTY_LAST_LOGIN, user.getLastLogin());
         userEntity.setProperty(PROPERTY_LAST_FCM_REGISTER, user.getLastFcmRegister());
@@ -254,8 +251,8 @@ public class UserRepository {
         userEntity.setProperty(PROPERTY_CRM_PROVIDER_USER_ID, user.getCrmProviderUserId());
         userEntity.setProperty(PROPERTY_ENABLED, user.isEnabled());
 
-        if (updatePassword)
-            userEntity.setProperty(PROPERTY_PASSWORD, user.getPassword());
+        if (updateLastUpdate)
+            userEntity.setProperty(PROPERTY_LAST_UPDATE, Calendar.getInstance().getTime());
     }
 
     private User entityToUser (Entity userEntity) {
@@ -266,11 +263,20 @@ public class UserRepository {
         user.setFcmRegId((String) userEntity.getProperty(PROPERTY_FCM_REG_ID));
         user.setLastLogin((Date) userEntity.getProperty(PROPERTY_LAST_LOGIN));
         user.setLastFcmRegister((Date) userEntity.getProperty(PROPERTY_LAST_FCM_REGISTER));
+        user.setLastUpdate((Date) userEntity.getProperty(PROPERTY_LAST_UPDATE));
         user.setRole((String) userEntity.getProperty(PROPERTY_ROLE));
         user.setCpf((String) userEntity.getProperty(PROPERTY_CPF));
-        user.setSalesProviderUserId(Long.parseLong((String) userEntity.getProperty(PROPERTY_SALES_PROVIDER_USER_ID)));
-        user.setCrmProviderUserId(Long.parseLong((String) userEntity.getProperty(PROPERTY_CRM_PROVIDER_USER_ID)));
         user.setEnabled((Boolean) userEntity.getProperty(PROPERTY_ENABLED));
+
+        String salesProviderUserId = (String) userEntity.getProperty(PROPERTY_SALES_PROVIDER_USER_ID);
+        String crmProviderUserId = (String) userEntity.getProperty(PROPERTY_CRM_PROVIDER_USER_ID);
+
+        if (CheckProperty.isLong(salesProviderUserId))
+            user.setSalesProviderUserId(Long.parseLong(salesProviderUserId));
+
+        if (CheckProperty.isLong(crmProviderUserId))
+            user.setCrmProviderUserId(Long.parseLong(crmProviderUserId));
+
         return user;
     }
 }

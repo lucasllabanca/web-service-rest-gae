@@ -13,7 +13,6 @@ import java.util.Optional;
 @Service("userDetailsService")
 public class UserService implements UserDetailsService {
 
-    //DI of User Repository
     @Autowired
     private UserRepository userRepository;
 
