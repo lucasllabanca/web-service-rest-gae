@@ -36,8 +36,8 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public List<User> getUsers() {
-        return userRepository.getUsers();
+    public ResponseEntity<List<User>> getUsers() {
+        return new ResponseEntity<List<User>>(userRepository.getUsers(), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
