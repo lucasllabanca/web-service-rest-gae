@@ -111,38 +111,31 @@ public class UserRepository {
 
     public Optional<User> getByEmail (String email) {
         log.info("Get user by email: " + email);
-
         Entity userEntity = getUserEntityByEmail(email);
 
-        if (userEntity != null) {
+        if (userEntity != null)
             return Optional.of(entityToUser(userEntity));
-        } else {
+        else
             return Optional.empty();
-        }
     }
 
     public Optional<User> getByCpf (String cpf) {
-        log.info("Get user by CPF: " + cpf);
-
+        log.info("Get user by cpf: " + cpf);
         Entity userEntity = getUserEntityByCpf(cpf);
 
-        if (userEntity != null) {
+        if (userEntity != null)
             return Optional.of(entityToUser(userEntity));
-        } else {
+        else
             return Optional.empty();
-        }
     }
 
     public List<User> getUsers() {
         List<User> users = new ArrayList<>();
         Query query = new Query(USER_KIND).addSort(PROPERTY_EMAIL, Query.SortDirection.ASCENDING);
-
         List<Entity> userEntities = datastoreService.prepare(query).asList(FetchOptions.Builder.withDefaults());
 
-        for (Entity userEntity : userEntities) {
-            User user = entityToUser(userEntity);
-            users.add(user);
-        }
+        for (Entity userEntity : userEntities)
+            users.add(entityToUser(userEntity));
 
         return users;
     }
@@ -172,8 +165,7 @@ public class UserRepository {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userToEntity(user, userEntity, true);
         datastoreService.put(userEntity);
-        user.setId(userEntity.getKey().getId());
-        return user;
+        return entityToUser(userEntity);
     }
 
     public User updateUser(User user, String email, boolean updateLastUpdate) throws UserAlreadyExistsException, UserNotFoundException {
@@ -185,12 +177,10 @@ public class UserRepository {
             if (userEntity != null) {
                 userToEntity(user, userEntity, updateLastUpdate);
                 datastoreService.put(userEntity);
-                user.setId(userEntity.getKey().getId());
-                return user;
+                return entityToUser(userEntity);
             } else {
                 throw new UserNotFoundException("Usuário " + email + " não encontrado");
             }
-
         } else {
             throw new UserAlreadyExistsException("Usuário" + user.getEmail() + " já existe");
         }

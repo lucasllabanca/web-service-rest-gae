@@ -100,7 +100,7 @@ public class UserController {
             if (optUser.isPresent()){
                 return new ResponseEntity<User>(optUser.get(), HttpStatus.OK);
             }else {
-                return new ResponseEntity<>("Usuário com e-mail: " + email + " não encontrado", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("Usuário com email: " + email + " - não encontrado", HttpStatus.NOT_FOUND);
             }
         } else {
             return new ResponseEntity<>("Usuário não autorizado", HttpStatus.FORBIDDEN);
@@ -129,7 +129,7 @@ public class UserController {
                 else
                     return new ResponseEntity<>("Usuário não autorizado", HttpStatus.FORBIDDEN);
             }else {
-                return new ResponseEntity<>("Usuário com CPF: " + cpf + " não encontrado", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("Usuário com cpf: " + cpf + " - não encontrado", HttpStatus.NOT_FOUND);
             }
 
         } else {
@@ -156,14 +156,14 @@ public class UserController {
                 try {
                     return new ResponseEntity<User>(userRepository.deleteUser(cpf), HttpStatus.OK);
                 } catch (UserNotFoundException e) {
-                    return new ResponseEntity<>("Usuário com CPF: " + cpf + " não encontrado", HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>("Usuário com cpf: " + cpf + " - não encontrado", HttpStatus.NOT_FOUND);
                 }
             } else {
                 return new ResponseEntity<>("Usuário não autorizado", HttpStatus.FORBIDDEN);
             }
 
         } else {
-            return new ResponseEntity<>("Usuário com CPF: " + cpf + " não encontrado", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Usuário com cpf: " + cpf + " - não encontrado", HttpStatus.NOT_FOUND);
         }
     }
 
@@ -181,19 +181,19 @@ public class UserController {
             case SAVE:
                 if (user.getPassword() == null || user.getPassword().trim().isEmpty())
                     return "Está faltando a propriedade 'password' no modelo.";
-                else if (requestParam == null || requestParam.trim().isEmpty())
-                    return "Parâmetro de requisição " + paramName + " deve ser informado.";
                 else
                     return validateUser(user);
 
             case UPDATE:
                 if (user.getId() == null || user.getId() == 0)
                     return "Está faltando a propriedade 'id' no modelo.";
+                else if (paramName != null && (requestParam == null || requestParam.trim().isEmpty()))
+                    return "Parâmetro de requisição " + paramName + " deve ser informado.";
                 else
                     return validateUser(user);
 
             default:
-                if (requestParam == null || requestParam.trim().isEmpty())
+                if (paramName != null && (requestParam == null || requestParam.trim().isEmpty()))
                     return "Parâmetro de requisição " + paramName + " deve ser informado.";
         }
 
@@ -206,16 +206,16 @@ public class UserController {
             return "Está faltando a propriedade 'email' no modelo.";
 
         if (!validateEmail(user.getEmail()))
-            return "A propriedade email do modelo não é um endereço de e-mail válido.";
+            return "A propriedade 'email' do modelo não é um endereço de e-mail válido.";
 
         if (user.getRole() == null || user.getRole().trim().isEmpty())
             return "Está faltando a propriedade 'role' no modelo.";
 
-        if (!user.getRole().equals("ROLE_ADMIN") || !user.getRole().equals("ROLE_USER"))
-        return "Role inválida. A role deve ser 'ADMIN' ou 'USER'.";
+        if (!user.getRole().equals("ROLE_ADMIN") && !user.getRole().equals("ROLE_USER"))
+        return "Propriedade 'role' inválida. Role deve ser 'ROLE_ADMIN' ou 'ROLE_USER'.";
 
         if (user.getCpf() == null || user.getCpf().trim().isEmpty())
-            return "Está faltando a propriedade 'CPF' no modelo.";
+            return "Está faltando a propriedade 'cpf' no modelo.";
 
         return "";
     }
