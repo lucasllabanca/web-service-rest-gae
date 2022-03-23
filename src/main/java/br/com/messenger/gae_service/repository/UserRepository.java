@@ -59,7 +59,7 @@ public class UserRepository {
                 adminUser = optUser.get();
                 if (!adminUser.getRole().equals("ROLE_ADMIN")){
                     adminUser.setRole("ROLE_ADMIN");
-                    this.updateUser(adminUser, ADMIN_EMAIL, true);
+                    this.updateUser(adminUser, ADMIN_EMAIL, false, true);
                 }
             } else {
                 adminUser = new User();
@@ -102,7 +102,7 @@ public class UserRepository {
         if (!canUseCache) {
             user.setLastLogin(Calendar.getInstance().getTime());
             try {
-                this.updateUser(user, user.getEmail(), false);
+                this.updateUser(user, user.getEmail(), false, false);
             } catch (UserAlreadyExistsException | UserNotFoundException e) {
                 log.severe("Falha ao atualizar último login do usuário");
             }
@@ -162,19 +162,19 @@ public class UserRepository {
 
         Key userKey = KeyFactory.createKey(USER_KIND, USER_KEY);
         Entity userEntity = new Entity(USER_KIND, userKey);
-        userToEntity(user, userEntity, true);
+        userToEntity(user, userEntity, true, true);
         datastoreService.put(userEntity);
         return entityToUser(userEntity);
     }
 
-    public User updateUser(User user, String email, boolean updateLastUpdate) throws UserAlreadyExistsException, UserNotFoundException {
+    public User updateUser(User user, String email, boolean encodePassword, boolean updateLastUpdate) throws UserAlreadyExistsException, UserNotFoundException {
 
         if (!checkIfEmailExists(user)) {
 
             Entity userEntity = getUserEntityByEmail(email);
 
             if (userEntity != null) {
-                userToEntity(user, userEntity, updateLastUpdate);
+                userToEntity(user, userEntity, encodePassword, updateLastUpdate);
                 datastoreService.put(userEntity);
                 return entityToUser(userEntity);
             } else {
@@ -227,10 +227,9 @@ public class UserRepository {
         return datastoreService.prepare(query).asSingleEntity();
     }
 
-    private void userToEntity (User user, Entity userEntity, boolean updateLastUpdate) {
+    private void userToEntity (User user, Entity userEntity, boolean encodePassword, boolean updateLastUpdate) {
         userEntity.setProperty(PROPERTY_ID, user.getId());
         userEntity.setProperty(PROPERTY_EMAIL, user.getEmail());
-        userEntity.setProperty(PROPERTY_PASSWORD, passwordEncoder.encode(user.getPassword()));
         userEntity.setProperty(PROPERTY_FCM_REG_ID, user.getFcmRegId());
         userEntity.setProperty(PROPERTY_LAST_LOGIN, user.getLastLogin());
         userEntity.setProperty(PROPERTY_LAST_FCM_REGISTER, user.getLastFcmRegister());
@@ -239,6 +238,11 @@ public class UserRepository {
         userEntity.setProperty(PROPERTY_SALES_PROVIDER_USER_ID, user.getSalesProviderUserId());
         userEntity.setProperty(PROPERTY_CRM_PROVIDER_USER_ID, user.getCrmProviderUserId());
         userEntity.setProperty(PROPERTY_ENABLED, user.isEnabled());
+
+        if (encodePassword)
+            userEntity.setProperty(PROPERTY_PASSWORD, passwordEncoder.encode(user.getPassword()));
+        else
+            userEntity.setProperty(PROPERTY_PASSWORD, user.getPassword());
 
         if (updateLastUpdate)
             userEntity.setProperty(PROPERTY_LAST_UPDATE, Calendar.getInstance().getTime());

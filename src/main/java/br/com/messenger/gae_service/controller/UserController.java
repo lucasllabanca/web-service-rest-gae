@@ -72,7 +72,7 @@ public class UserController {
                 user.setRole("ROLE_USER");
 
             try {
-                return new ResponseEntity<User>(userRepository.updateUser(user, email, true), HttpStatus.OK);
+                return new ResponseEntity<User>(userRepository.updateUser(user, email, true, true), HttpStatus.OK);
             } catch (UserAlreadyExistsException e) {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.PRECONDITION_FAILED);
             } catch (UserNotFoundException e) {
