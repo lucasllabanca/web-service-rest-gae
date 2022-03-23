@@ -162,7 +162,6 @@ public class UserRepository {
 
         Key userKey = KeyFactory.createKey(USER_KIND, USER_KEY);
         Entity userEntity = new Entity(USER_KIND, userKey);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
         userToEntity(user, userEntity, true);
         datastoreService.put(userEntity);
         return entityToUser(userEntity);
@@ -231,7 +230,7 @@ public class UserRepository {
     private void userToEntity (User user, Entity userEntity, boolean updateLastUpdate) {
         userEntity.setProperty(PROPERTY_ID, user.getId());
         userEntity.setProperty(PROPERTY_EMAIL, user.getEmail());
-        userEntity.setProperty(PROPERTY_PASSWORD, user.getPassword());
+        userEntity.setProperty(PROPERTY_PASSWORD, passwordEncoder.encode(user.getPassword()));
         userEntity.setProperty(PROPERTY_FCM_REG_ID, user.getFcmRegId());
         userEntity.setProperty(PROPERTY_LAST_LOGIN, user.getLastLogin());
         userEntity.setProperty(PROPERTY_LAST_FCM_REGISTER, user.getLastFcmRegister());
