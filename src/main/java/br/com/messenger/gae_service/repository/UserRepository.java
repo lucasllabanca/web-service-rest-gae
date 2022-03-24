@@ -148,17 +148,17 @@ public class UserRepository {
             datastoreService.delete(userEntity.getKey());
             return entityToUser(userEntity);
         } else {
-            throw new UserNotFoundException("Usuário com CPF: " + cpf + " não encontrado");
+            throw new UserNotFoundException("Usuário com cpf: " + cpf + " não encontrado");
         }
     }
 
     public User saveUser(User user) throws UserAlreadyExistsException {
 
         if (checkIfEmailExists(user))
-            throw new UserAlreadyExistsException("Usuário com e-mail: " + user.getEmail() + " já existe");
+            throw new UserAlreadyExistsException("Usuário com email: " + user.getEmail() + " já existe");
 
         if (checkIfCpfExists(user))
-            throw new UserAlreadyExistsException("Usuário com CPF: " + user.getCpf() + " já existe");
+            throw new UserAlreadyExistsException("Usuário com cpf: " + user.getCpf() + " já existe");
 
         Key userKey = KeyFactory.createKey(USER_KIND, USER_KEY);
         Entity userEntity = new Entity(USER_KIND, userKey);

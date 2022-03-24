@@ -156,7 +156,7 @@ public class UserController {
                 try {
                     return new ResponseEntity<User>(userRepository.deleteUser(cpf), HttpStatus.OK);
                 } catch (UserNotFoundException e) {
-                    return new ResponseEntity<>("Usuário com cpf: " + cpf + " - não encontrado", HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
                 }
             } else {
                 return new ResponseEntity<>("Usuário não autorizado", HttpStatus.FORBIDDEN);
