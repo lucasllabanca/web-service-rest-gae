@@ -3,7 +3,6 @@ package br.com.messenger.gae_service.repository;
 import br.com.messenger.gae_service.exception.UserAlreadyExistsException;
 import br.com.messenger.gae_service.exception.UserNotFoundException;
 import br.com.messenger.gae_service.model.User;
-import br.com.messenger.gae_service.util.CheckProperty;
 import com.google.appengine.api.datastore.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -232,12 +231,14 @@ public class UserRepository {
         userEntity.setProperty(PROPERTY_EMAIL, user.getEmail());
         userEntity.setProperty(PROPERTY_FCM_REG_ID, user.getFcmRegId());
         userEntity.setProperty(PROPERTY_LAST_LOGIN, user.getLastLogin());
-        userEntity.setProperty(PROPERTY_LAST_FCM_REGISTER, user.getLastFcmRegister());
         userEntity.setProperty(PROPERTY_ROLE, user.getRole());
         userEntity.setProperty(PROPERTY_CPF, user.getCpf());
         userEntity.setProperty(PROPERTY_SALES_PROVIDER_USER_ID, user.getSalesProviderUserId());
         userEntity.setProperty(PROPERTY_CRM_PROVIDER_USER_ID, user.getCrmProviderUserId());
         userEntity.setProperty(PROPERTY_ENABLED, user.isEnabled());
+
+        if (!user.getFcmRegId().equals((String) userEntity.getProperty(PROPERTY_FCM_REG_ID)))
+            userEntity.setProperty(PROPERTY_LAST_FCM_REGISTER, Calendar.getInstance().getTime());
 
         if (encodePassword)
             userEntity.setProperty(PROPERTY_PASSWORD, passwordEncoder.encode(user.getPassword()));
@@ -259,16 +260,9 @@ public class UserRepository {
         user.setLastUpdate((Date) userEntity.getProperty(PROPERTY_LAST_UPDATE));
         user.setRole((String) userEntity.getProperty(PROPERTY_ROLE));
         user.setCpf((String) userEntity.getProperty(PROPERTY_CPF));
+        user.setSalesProviderUserId((Long) userEntity.getProperty(PROPERTY_SALES_PROVIDER_USER_ID));
+        user.setCrmProviderUserId((Long) userEntity.getProperty(PROPERTY_CRM_PROVIDER_USER_ID));
         user.setEnabled((Boolean) userEntity.getProperty(PROPERTY_ENABLED));
-
-        String salesProviderUserId = (String) userEntity.getProperty(PROPERTY_SALES_PROVIDER_USER_ID);
-        String crmProviderUserId = (String) userEntity.getProperty(PROPERTY_CRM_PROVIDER_USER_ID);
-
-        if (CheckProperty.isLong(salesProviderUserId))
-            user.setSalesProviderUserId(Long.parseLong(salesProviderUserId));
-
-        if (CheckProperty.isLong(crmProviderUserId))
-            user.setCrmProviderUserId(Long.parseLong(crmProviderUserId));
 
         return user;
     }
