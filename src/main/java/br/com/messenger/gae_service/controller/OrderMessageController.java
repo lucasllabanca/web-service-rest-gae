@@ -92,9 +92,12 @@ public class OrderMessageController {
     private String getOrderNotification(User user, Order order) {
 
         StringBuilder notification = new StringBuilder();
-        notification.append("Olá " + user.getEmail() + "!");
+        notification.append("Olá usuário: " + user.getEmail());
+        notification.append(System.getProperty("line.separator"));
         notification.append("CPF: " + user.getCpf());
+        notification.append(System.getProperty("line.separator"));
         notification.append("ID provedor de vendas: " + user.getSalesProviderUserId());
+        notification.append(System.getProperty("line.separator"));
         notification.append("Seu pedido de código " + order.getOrderId() + " possui a seguinte atualização:");
         notification.append(System.getProperty("line.separator"));
         notification.append(order.getNotification());

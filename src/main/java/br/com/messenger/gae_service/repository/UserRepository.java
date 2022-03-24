@@ -230,7 +230,6 @@ public class UserRepository {
         userEntity.setProperty(PROPERTY_ID, user.getId());
         userEntity.setProperty(PROPERTY_EMAIL, user.getEmail());
         userEntity.setProperty(PROPERTY_FCM_REG_ID, user.getFcmRegId());
-        userEntity.setProperty(PROPERTY_LAST_LOGIN, user.getLastLogin());
         userEntity.setProperty(PROPERTY_ROLE, user.getRole());
         userEntity.setProperty(PROPERTY_CPF, user.getCpf());
         userEntity.setProperty(PROPERTY_SALES_PROVIDER_USER_ID, user.getSalesProviderUserId());
@@ -239,6 +238,8 @@ public class UserRepository {
 
         if (!user.getFcmRegId().equals((String) userEntity.getProperty(PROPERTY_FCM_REG_ID)))
             userEntity.setProperty(PROPERTY_LAST_FCM_REGISTER, Calendar.getInstance().getTime());
+
+        userEntity.setProperty(PROPERTY_FCM_REG_ID, user.getFcmRegId());
 
         if (encodePassword)
             userEntity.setProperty(PROPERTY_PASSWORD, passwordEncoder.encode(user.getPassword()));
