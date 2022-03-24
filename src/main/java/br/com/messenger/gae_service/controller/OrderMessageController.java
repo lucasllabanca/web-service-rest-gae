@@ -3,13 +3,8 @@ package br.com.messenger.gae_service.controller;
 import br.com.messenger.gae_service.model.Order;
 import br.com.messenger.gae_service.model.User;
 import br.com.messenger.gae_service.repository.UserRepository;
+import br.com.messenger.gae_service.util.Operation;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.Http;
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Query;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -22,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.Optional;
@@ -34,9 +30,6 @@ public class OrderMessageController {
 
     @Autowired
     UserRepository userRepository;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @PostConstruct
     public void initialize() {
@@ -54,18 +47,28 @@ public class OrderMessageController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(path = "/message")
-    public ResponseEntity<String> sendOrderMessage(@RequestBody Order order, @RequestParam String cpf) {
+    public ResponseEntity<String> sendOrderMessage(@RequestBody Order order) {
 
-        Optional<User> optUser = userRepository.getByCpf(cpf);
+        String validateMsg = validateOrder(order, null);
+
+        if (!validateMsg.isEmpty())
+            return new ResponseEntity<>(validateMsg, HttpStatus.BAD_REQUEST);
+
+        Optional<User> optUser = userRepository.getByCpf(order.getCpf());
 
         if (optUser.isPresent()) {
 
             User user = optUser.get();
 
+            validateMsg = validateOrder(order, user);
+
+            if (!validateOrder(order, user).isEmpty())
+                return new ResponseEntity<>(validateMsg, HttpStatus.BAD_REQUEST);
+
             if (user.getFcmRegId() != null) {
                 try {
                     Message message = Message.builder()
-                            .putData("salesMessage", objectMapper.writeValueAsString(order))
+                            .putData("salesMessage", getOrderNotification(user, order))
                             .setToken(user.getFcmRegId())
                             .build();
 
@@ -75,14 +78,53 @@ public class OrderMessageController {
                     log.info("Resposta do Firebase Cloud Messaging: " + response);
 
                     return new ResponseEntity<>("Notificação enviada com sucesso para o usuário com cpf: " + user.getCpf(), HttpStatus.OK);
-                } catch (FirebaseMessagingException | JsonProcessingException e) {
+                } catch (FirebaseMessagingException e) {
                     return new ResponseEntity<>("Falha ao enviar notificação: " + e.getMessage(), HttpStatus.BAD_REQUEST);
                 }
             } else {
                 return new ResponseEntity<>("Usuário com cpf: " + user.getCpf() + " - não registrado no FCM", HttpStatus.PRECONDITION_FAILED);
             }
         } else {
-            return new ResponseEntity<>("Usuário com cpf: " + cpf + " - não encontrado", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Usuário com cpf: " + order.getCpf() + " - não encontrado", HttpStatus.NOT_FOUND);
         }
+    }
+
+    private String getOrderNotification(User user, Order order) {
+
+        StringBuilder notification = new StringBuilder();
+        notification.append("Olá " + user.getEmail() + "!");
+        notification.append("CPF: " + user.getCpf());
+        notification.append("ID provedor de vendas: " + user.getSalesProviderUserId());
+        notification.append("Seu pedido de código " + order.getOrderId() + " possui a seguinte atualização:");
+        notification.append(System.getProperty("line.separator"));
+        notification.append(order.getNotification());
+        notification.append(System.getProperty("line.separator"));
+        notification.append("Novo status do pedido: " + order.getNewOrderStatus());
+        return notification.toString();
+    }
+
+    private String validateOrder(Order order, @Nullable User user) {
+
+        if (user == null) {
+            if (order.getCpf() == null || order.getCpf().trim().isEmpty())
+                return "Está faltando a propriedade 'cpf' no modelo.";
+
+            if (order.getOrderId() == null || order.getOrderId() == 0)
+                return "Está faltando a propriedade 'orderId' no modelo.";
+
+            if (order.getSalesProviderUserId() == null || order.getSalesProviderUserId() == 0)
+                return "Está faltando a propriedade 'salesProviderUserId' no modelo.";
+
+            if (order.getNotification() == null || order.getNotification().trim().isEmpty())
+                return "Está faltando a propriedade 'notification' no modelo.";
+
+            if (order.getNewOrderStatus() == null || order.getNewOrderStatus().trim().isEmpty())
+                return "Está faltando a propriedade 'newOrderStatus' no modelo.";
+        } else {
+            if (order.getSalesProviderUserId() != user.getSalesProviderUserId())
+                return "ID do provedor de vendas do usuário passado na requisição não coincide com o ID do provedor de vendas registrado na base para o usuário.";
+        }
+
+        return "";
     }
 }

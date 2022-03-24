@@ -4,18 +4,18 @@ import java.io.Serializable;
 
 public class Order implements Serializable {
 
-    private Long id;
+    private Long orderId;
     private Long salesProviderUserId;
     private String cpf;
     private String notification;
     private String newOrderStatus;
 
-    public Long getId() {
-        return id;
+    public Long getOrderId() {
+        return orderId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setOrderId(Long id) {
+        this.orderId = id;
     }
 
     public Long getSalesProviderUserId() {
