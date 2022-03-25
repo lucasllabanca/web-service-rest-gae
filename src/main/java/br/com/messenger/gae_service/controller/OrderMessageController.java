@@ -3,8 +3,6 @@ package br.com.messenger.gae_service.controller;
 import br.com.messenger.gae_service.model.Order;
 import br.com.messenger.gae_service.model.User;
 import br.com.messenger.gae_service.repository.UserRepository;
-import br.com.messenger.gae_service.util.Operation;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
