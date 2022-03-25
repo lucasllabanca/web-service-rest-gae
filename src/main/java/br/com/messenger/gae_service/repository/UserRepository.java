@@ -240,11 +240,10 @@ public class UserRepository {
         String fcmRegIdEntity = (String) userEntity.getProperty(PROPERTY_FCM_REG_ID);
         boolean updateLastFcmRegister = false;
 
-        if (fcmRegIdUser != null) {
-            updateLastFcmRegister = (!user.getFcmRegId().equals(fcmRegIdEntity));
-        } else {
-            updateLastFcmRegister = (fcmRegIdEntity == null);
-        }
+        if (fcmRegIdUser != null)
+            updateLastFcmRegister = (!fcmRegIdUser.equals(fcmRegIdEntity));
+        else
+            updateLastFcmRegister = (fcmRegIdEntity != null);
 
         if (updateLastFcmRegister)
             userEntity.setProperty(PROPERTY_LAST_FCM_REGISTER, Calendar.getInstance().getTime());

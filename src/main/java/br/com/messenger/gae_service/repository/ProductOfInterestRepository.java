@@ -18,7 +18,7 @@ public class ProductOfInterestRepository {
     private DatastoreService datastoreService;
 
     @Autowired
-    public ProductOfInterestRepository(DatastoreService datastoreService) {
+    public ProductOfInterestRepository() {
         this.datastoreService = DatastoreServiceFactory.getDatastoreService();
     }
 
