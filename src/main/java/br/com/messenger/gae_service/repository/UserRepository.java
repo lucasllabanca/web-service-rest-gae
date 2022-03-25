@@ -108,7 +108,7 @@ public class UserRepository {
         }
     }
 
-    public Optional<User> getByEmail (String email) {
+    public Optional<User> getByEmail(String email) {
         log.info("Get user by email: " + email);
         Entity userEntity = getUserEntityByEmail(email);
 
@@ -118,7 +118,7 @@ public class UserRepository {
             return Optional.empty();
     }
 
-    public Optional<User> getByCpf (String cpf) {
+    public Optional<User> getByCpf(String cpf) {
         log.info("Get user by cpf: " + cpf);
         Entity userEntity = getUserEntityByCpf(cpf);
 
@@ -184,7 +184,7 @@ public class UserRepository {
         }
     }
 
-    private boolean checkIfEmailExists (User user) {
+    private boolean checkIfEmailExists(User user) {
 
         Entity userEntity = getUserEntityByEmail(user.getEmail());
 
@@ -199,7 +199,7 @@ public class UserRepository {
         }
     }
 
-    private boolean checkIfCpfExists (User user) {
+    private boolean checkIfCpfExists(User user) {
 
         Entity userEntity = getUserEntityByCpf(user.getCpf());
 
@@ -226,7 +226,7 @@ public class UserRepository {
         return datastoreService.prepare(query).asSingleEntity();
     }
 
-    private void userToEntity (User user, Entity userEntity, boolean encodePassword, boolean updateLastUpdate) {
+    private void userToEntity(User user, Entity userEntity, boolean encodePassword, boolean updateLastUpdate) {
         userEntity.setProperty(PROPERTY_ID, user.getId());
         userEntity.setProperty(PROPERTY_EMAIL, user.getEmail());
         userEntity.setProperty(PROPERTY_FCM_REG_ID, user.getFcmRegId());
@@ -236,7 +236,17 @@ public class UserRepository {
         userEntity.setProperty(PROPERTY_CRM_PROVIDER_USER_ID, user.getCrmProviderUserId());
         userEntity.setProperty(PROPERTY_ENABLED, user.isEnabled());
 
-        if (!user.getFcmRegId().equals((String) userEntity.getProperty(PROPERTY_FCM_REG_ID)))
+        String fcmRegIdUser = user.getFcmRegId();
+        String fcmRegIdEntity = (String) userEntity.getProperty(PROPERTY_FCM_REG_ID);
+        boolean updateLastFcmRegister = false;
+
+        if (fcmRegIdUser != null) {
+            updateLastFcmRegister = (!user.getFcmRegId().equals(fcmRegIdEntity));
+        } else {
+            updateLastFcmRegister = (fcmRegIdEntity == null);
+        }
+
+        if (updateLastFcmRegister)
             userEntity.setProperty(PROPERTY_LAST_FCM_REGISTER, Calendar.getInstance().getTime());
 
         userEntity.setProperty(PROPERTY_FCM_REG_ID, user.getFcmRegId());
@@ -250,7 +260,7 @@ public class UserRepository {
             userEntity.setProperty(PROPERTY_LAST_UPDATE, Calendar.getInstance().getTime());
     }
 
-    private User entityToUser (Entity userEntity) {
+    private User entityToUser(Entity userEntity) {
         User user = new User();
         user.setId(userEntity.getKey().getId());
         user.setEmail((String) userEntity.getProperty(PROPERTY_EMAIL));
