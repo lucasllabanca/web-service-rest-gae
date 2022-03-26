@@ -108,7 +108,7 @@ public class ProductOfInterestRepository {
         productOfInterest.setCpf((String) productOfInterestEntity.getProperty(PROPERTY_CPF));
         productOfInterest.setSalesProviderUserId((Long) productOfInterestEntity.getProperty(PROPERTY_SALES_PROVIDER_USER_ID));
         productOfInterest.setSalesProviderProductId((Long) productOfInterestEntity.getProperty(PROPERTY_SALES_PROVIDER_PRODUCT_ID));
-        productOfInterest.setMinPriceAlert((Float) productOfInterestEntity.getProperty(PROPERTY_MIN_PRICE_ALERT));
+        productOfInterest.setMinPriceAlert((Double) productOfInterestEntity.getProperty(PROPERTY_MIN_PRICE_ALERT));
 
         return productOfInterest;
     }

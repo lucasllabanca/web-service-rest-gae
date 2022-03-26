@@ -40,7 +40,7 @@ public class ProductOfInterestController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     public ResponseEntity<?> getProductsOfInterest(@PathVariable String cpf, Authentication authentication) {
 
-        String validateMsg = validateModel(Operation.GETBY, null, cpf, null, "cpf");
+        String validateMsg = validateModel(Operation.GETBY, null, cpf, "cpf", null);
 
         if (!validateMsg.isEmpty())
             return new ResponseEntity<>(validateMsg, HttpStatus.BAD_REQUEST);
@@ -82,17 +82,21 @@ public class ProductOfInterestController {
 
     @DeleteMapping(path = "/{cpf}/{salesProviderProductId}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    public ResponseEntity<?> deleteProductOfInterest(@PathVariable String cpf, @PathVariable Long salesProviderProductId, Authentication authentication) {
+    public ResponseEntity<?> deleteProductOfInterest(@PathVariable("cpf") String cpf, @PathVariable("salesProviderProductId") String salesProviderProductId, Authentication authentication) {
 
-        String validateMsg = validateModel(Operation.DELETE, null, cpf, null, "cpf");
-        validateMsg += " " + validateModel(Operation.DELETE, null, null, salesProviderProductId, "salesProviderProductId");
+        String validateMsg = validateModel(Operation.DELETE, null, cpf, "cpf", false);
+
+        if (!validateMsg.isEmpty())
+            return new ResponseEntity<>(validateMsg, HttpStatus.BAD_REQUEST);
+
+        validateMsg = validateModel(Operation.DELETE, null, salesProviderProductId, "salesProviderProductId", true);
 
         if (!validateMsg.isEmpty())
             return new ResponseEntity<>(validateMsg, HttpStatus.BAD_REQUEST);
 
         if (canRunThisOperation(authentication, cpf)) {
             try {
-                return new ResponseEntity<ProductOfInterest>(productOfInterestRepository.deleteProductOfInterest(cpf, salesProviderProductId), HttpStatus.OK);
+                return new ResponseEntity<ProductOfInterest>(productOfInterestRepository.deleteProductOfInterest(cpf, Long.parseLong(salesProviderProductId)), HttpStatus.OK);
             } catch (ProductOfInterestNotFoundException e) {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.PRECONDITION_FAILED);
             } catch (Exception e) {
@@ -117,22 +121,31 @@ public class ProductOfInterestController {
             return false;
     }
 
-    private String validateModel(Operation operation, @Nullable ProductOfInterest productOfInterest, @Nullable String requestParamString, @Nullable Long requestParamLong, @Nullable String paramName) {
+    private String validateModel(Operation operation, @Nullable ProductOfInterest productOfInterest, @Nullable String requestParam, @Nullable String paramName, @Nullable Boolean validateAsLong) {
         switch (operation) {
             case SAVE:
                 return validateProductOfInterest(productOfInterest);
 
             case DELETE:
                 if (paramName != null) {
-                    if (requestParamString == null || requestParamString.trim().isEmpty())
+                    if (requestParam == null || requestParam.trim().isEmpty())
                         return "Variável de endereço " + paramName + " deve ser informada.";
 
-                    if (requestParamLong == null || requestParamLong <= 0)
-                        return "Variável de endereço " + paramName + " deve ser informada e não pode ser menor ou igual a 0.";
+                    if (validateAsLong) {
+                        try {
+
+                            Long paramLong = Long.parseLong(requestParam);
+                            if (paramLong == null || paramLong <= 0)
+                                return "Variável de endereço " + paramName + " deve ser informada e não pode ser menor ou igual a 0.";
+
+                        } catch (NumberFormatException e) {
+                            return "Variável de endereço " + paramName + " deve ser um número inteiro.";
+                        }
+                    }
                 }
 
             case GETBY:
-                if (paramName != null && (requestParamString == null || requestParamString.trim().isEmpty()))
+                if (paramName != null && (requestParam == null || requestParam.trim().isEmpty()))
                     return "Variável de endereço " + paramName + " deve ser informada.";
         }
 
@@ -145,19 +158,19 @@ public class ProductOfInterestController {
             return "Está faltando a propriedade 'cpf' no modelo.";
 
         if (productOfInterest.getSalesProviderUserId() == null)
-            return "Está faltando a propriedade 'sales provider user id' no modelo.";
+            return "Está faltando a propriedade 'salesProviderUserId' no modelo.";
 
         if (productOfInterest.getSalesProviderUserId() <= 0)
-            return "A propriedade 'sales provider user id' do modelo não pode ser menor ou igual a 0.";
+            return "A propriedade 'salesProviderUserId' do modelo não pode ser menor ou igual a 0.";
 
         if (productOfInterest.getSalesProviderProductId() == null)
-            return "Está faltando a propriedade 'sales provider product id' no modelo.";
+            return "Está faltando a propriedade 'ssalesProviderProductId' no modelo.";
 
         if (productOfInterest.getSalesProviderProductId() <= 0)
-            return "A propriedade 'sales provider product id' do modelo não pode ser menor ou igual a 0.";
+            return "A propriedade 'salesProviderProductId' do modelo não pode ser menor ou igual a 0.";
 
         if (productOfInterest.getMinPriceAlert() <= 0)
-            return "A propriedade 'min price alert' do modelo não pode ser menor ou igual a 0.";
+            return "A propriedade 'minPriceAlert' do modelo não pode ser 'null' e nem menor ou igual a 0.";
 
         return "";
     }

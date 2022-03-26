@@ -6,7 +6,7 @@ public class ProductOfInterest {
     private String cpf;
     private Long salesProviderUserId;
     private Long salesProviderProductId;
-    private float minPriceAlert;
+    private double minPriceAlert;
 
     public Long getProductOfInterestId() {
         return productOfInterestId;
@@ -40,11 +40,11 @@ public class ProductOfInterest {
         this.salesProviderProductId = salesProviderProductId;
     }
 
-    public float getMinPriceAlert() {
+    public double getMinPriceAlert() {
         return minPriceAlert;
     }
 
-    public void setMinPriceAlert(float minPriceAlert) {
+    public void setMinPriceAlert(double minPriceAlert) {
         this.minPriceAlert = minPriceAlert;
     }
 }

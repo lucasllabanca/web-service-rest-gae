@@ -59,7 +59,7 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @PutMapping(path = "/byemail")
-    public ResponseEntity<?> updateUser(@RequestBody User user, @RequestParam("email") String email, Authentication authentication) {
+    public ResponseEntity<?> updateUser(@RequestBody User user, @RequestParam String email, Authentication authentication) {
 
         String validateMsg = validateModel(Operation.UPDATE, user, email, "email");
 
@@ -216,6 +216,15 @@ public class UserController {
 
         if (user.getCpf() == null || user.getCpf().trim().isEmpty())
             return "Está faltando a propriedade 'cpf' no modelo.";
+
+        if (user.getLastFcmRegister() != null)
+            return "A propriedade 'lastFcmRegister' do modelo não deve ser passada na requisição pois é registrada sempre que a propriedade 'fcmRegId' é alterada.";
+
+        if (user.getLastLogin() != null)
+            return "A propriedade 'lastLogin' do modelo não precisa ser passada na requisição pois é registrada sempre que o usuário loga na aplicação e o cache não é usado.";
+
+        if (user.getLastUpdate() != null)
+            return "A propriedade 'lastUpdate' do modelo não precisa ser passada na requisição pois é registrada sempre que o usuário é criado ou alterado.";
 
         return "";
     }
