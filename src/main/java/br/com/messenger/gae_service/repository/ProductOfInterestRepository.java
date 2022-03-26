@@ -33,6 +33,22 @@ public class ProductOfInterestRepository {
     private static final String PROPERTY_SALES_PROVIDER_PRODUCT_ID = "salesProviderProductId";
     private static final String PROPERTY_MIN_PRICE_ALERT = "minPriceAlert";
 
+    public List<ProductOfInterest> getProductsOfInterestBySalesProviderProductIdAndMinPriceAlert(Long salesProviderProductId, double minPriceAlert) {
+
+        List<ProductOfInterest> productsOfInterest = new ArrayList<>();
+
+        Query.Filter salesProviderProductIdFilter = new Query.FilterPredicate(PROPERTY_SALES_PROVIDER_PRODUCT_ID, Query.FilterOperator.EQUAL, salesProviderProductId);
+        Query.Filter minPriceFilter = new Query.FilterPredicate(PROPERTY_MIN_PRICE_ALERT, Query.FilterOperator.LESS_THAN_OR_EQUAL, minPriceAlert);
+        Query.CompositeFilter minPriceAndSalesProviderProductIdFilter = Query.CompositeFilterOperator.and(salesProviderProductIdFilter, minPriceFilter);
+        Query query = new Query(PRODUCT_OF_INTEREST_KIND).setFilter(minPriceAndSalesProviderProductIdFilter);
+        List<Entity> productOfInterestEntities = datastoreService.prepare(query).asList(FetchOptions.Builder.withDefaults());
+
+        for (Entity productOfInterestEntity : productOfInterestEntities)
+            productsOfInterest.add(entityToProductOfInterest(productOfInterestEntity));
+
+        return productsOfInterest;
+    }
+
     public List<ProductOfInterest> getProductsOfInterestByCpf(String cpf) throws UserNotFoundException {
 
         if (!checkIfUserExistsByCpf(cpf))

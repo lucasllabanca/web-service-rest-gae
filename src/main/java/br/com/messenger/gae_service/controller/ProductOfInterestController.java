@@ -170,7 +170,7 @@ public class ProductOfInterestController {
             return "A propriedade 'salesProviderProductId' do modelo não pode ser menor ou igual a 0.";
 
         if (productOfInterest.getMinPriceAlert() <= 0)
-            return "A propriedade 'minPriceAlert' do modelo não pode ser 'null' e nem menor ou igual a 0.";
+            return "A propriedade 'minPriceAlert' do modelo não pode ser nula e nem menor ou igual a 0.";
 
         return "";
     }
