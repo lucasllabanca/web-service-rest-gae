@@ -75,7 +75,7 @@ public class ProductOfInterestRepository {
             datastoreService.delete(productOfInterestEntity.getKey());
             return entityToProductOfInterest(productOfInterestEntity);
         } else {
-            throw new ProductOfInterestNotFoundException("Produto de Interesse com cpf: " + cpf + " and sales provider product id: " + salesProviderProductId + "  não encontrado");
+            throw new ProductOfInterestNotFoundException("Produto de Interesse com cpf: " + cpf + " e salesProviderProductId: " + salesProviderProductId + "  não encontrado");
         }
     }
 

@@ -164,7 +164,7 @@ public class ProductOfInterestController {
             return "A propriedade 'salesProviderUserId' do modelo não pode ser menor ou igual a 0.";
 
         if (productOfInterest.getSalesProviderProductId() == null)
-            return "Está faltando a propriedade 'ssalesProviderProductId' no modelo.";
+            return "Está faltando a propriedade 'salesProviderProductId' no modelo.";
 
         if (productOfInterest.getSalesProviderProductId() <= 0)
             return "A propriedade 'salesProviderProductId' do modelo não pode ser menor ou igual a 0.";

@@ -116,24 +116,17 @@ public class UserController {
         if (!validateMsg.isEmpty())
             return new ResponseEntity<>(validateMsg, HttpStatus.BAD_REQUEST);
 
-        String authenticationEmail = getAuthenticationEmail(authentication);
+        Optional<User> optUser = userRepository.getByCpf(cpf);
 
-        if (canRunThisOperation(authentication, authenticationEmail)) {
-            Optional<User> optUser = userRepository.getByCpf(cpf);
+        if (optUser.isPresent()){
+            User user = optUser.get();
 
-            if (optUser.isPresent()){
-                User user = optUser.get();
-
-                if (user.getEmail().equals(authenticationEmail))
-                    return new ResponseEntity<User>(user, HttpStatus.OK);
-                else
-                    return new ResponseEntity<>("Usuário não autorizado", HttpStatus.FORBIDDEN);
-            }else {
-                return new ResponseEntity<>("Usuário com cpf: " + cpf + " - não encontrado", HttpStatus.NOT_FOUND);
-            }
-
-        } else {
-            return new ResponseEntity<>("Usuário não autorizado", HttpStatus.FORBIDDEN);
+            if (canRunThisOperation(authentication, user.getEmail()))
+                return new ResponseEntity<User>(user, HttpStatus.OK);
+            else
+                return new ResponseEntity<>("Usuário não autorizado", HttpStatus.FORBIDDEN);
+        }else {
+            return new ResponseEntity<>("Usuário com cpf: " + cpf + " - não encontrado", HttpStatus.NOT_FOUND);
         }
     }
 

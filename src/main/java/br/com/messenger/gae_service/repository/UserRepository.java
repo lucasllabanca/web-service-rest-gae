@@ -180,7 +180,7 @@ public class UserRepository {
                 throw new UserNotFoundException("Usuário " + email + " não encontrado");
             }
         } else {
-            throw new UserAlreadyExistsException("Usuário" + user.getEmail() + " já existe");
+            throw new UserAlreadyExistsException("Usuário " + user.getEmail() + " já existe");
         }
     }
 
