@@ -6,7 +6,6 @@ import br.com.messenger.gae_service.model.ProductOfInterest;
 import br.com.messenger.gae_service.model.User;
 import br.com.messenger.gae_service.repository.ProductOfInterestRepository;
 import br.com.messenger.gae_service.repository.UserRepository;
-import com.google.appengine.api.datastore.Entity;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -26,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(path = "/api/messages")

@@ -4,4 +4,8 @@
         <property name="email" direction="asc" />
         <property name="cpf" direction="asc" />
     </datastore-index>
+    <datastore-index kind="productsOfInterest" ancestor="false">
+        <property name="salesProviderProductId" direction="asc" />
+        <property name="minPriceAlert" direction="asc" />
+    </datastore-index>
 </datastore-indexes>
