@@ -38,7 +38,7 @@ public class ProductOfInterestRepository {
         List<ProductOfInterest> productsOfInterest = new ArrayList<>();
 
         Query.Filter salesProviderProductIdFilter = new Query.FilterPredicate(PROPERTY_SALES_PROVIDER_PRODUCT_ID, Query.FilterOperator.EQUAL, salesProviderProductId);
-        Query.Filter minPriceFilter = new Query.FilterPredicate(PROPERTY_MIN_PRICE_ALERT, Query.FilterOperator.LESS_THAN_OR_EQUAL, minPriceAlert);
+        Query.Filter minPriceFilter = new Query.FilterPredicate(PROPERTY_MIN_PRICE_ALERT, Query.FilterOperator.GREATER_THAN_OR_EQUAL, minPriceAlert);
         Query.CompositeFilter minPriceAndSalesProviderProductIdFilter = Query.CompositeFilterOperator.and(salesProviderProductIdFilter, minPriceFilter);
         Query query = new Query(PRODUCT_OF_INTEREST_KIND).setFilter(minPriceAndSalesProviderProductIdFilter);
         List<Entity> productOfInterestEntities = datastoreService.prepare(query).asList(FetchOptions.Builder.withDefaults());
